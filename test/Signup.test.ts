@@ -1,8 +1,10 @@
-import { GetAccount } from "../src/application/GetAccount";
-import { Signup } from "../src/application/Signup";
-import { AccountDAODatabase, AccountDAOMemory } from "../src/resource/AccountDAO";
-import { MailerGatewayMemory } from "../src/resource/MailerGateway";
+import Account from "../src/domain/Account";
+import { GetAccount } from "../src/application/usecase/GetAccount";
+import { Signup } from "../src/application/usecase/Signup";
+import { AccountRepositoryDatabase, AccountRepositoryMemory } from "../src/infra/repository/AccountRepository";
+import { MailerGatewayMemory } from "../src/infra/gateway/MailerGateway";
 import sinon from "sinon";
+import DatabaseConnection, { PgPromiseAdapter } from "../src/infra/database/DatabaseConnection";
 
 // Integration Test or Unit Test
 
@@ -11,10 +13,10 @@ let getAccount: GetAccount;
 
 beforeEach(async () => {
 	// Fake é uma implementação falsa, que mimifica a implementação original
-	const accountDAO = new AccountDAOMemory();
+	const accountRepository = new AccountRepositoryMemory();
 	const mailerGateway = new MailerGatewayMemory();
-	signup = new Signup(accountDAO, mailerGateway);
-	getAccount = new GetAccount(accountDAO);
+	signup = new Signup(accountRepository, mailerGateway);
+	getAccount = new GetAccount(accountRepository);
 });
 
 test("Deve criar uma conta para o passageiro", async function () {
@@ -109,13 +111,14 @@ test("Deve criar uma conta para o passageiro com stub", async function () {
 		cpf: "87748248800",
 		isPassenger: true
 	};
-	const saveAccountStub = sinon.stub(AccountDAODatabase.prototype, "saveAccount").resolves();
-	const getAccountByEmailStub = sinon.stub(AccountDAODatabase.prototype, "getAccountByEmail").resolves(undefined);
-	const getAccountByIdStub = sinon.stub(AccountDAODatabase.prototype, "getAccountById").resolves(input);
-	const accountDAO = new AccountDAODatabase();
+	const connection = new PgPromiseAdapter();
+	const saveAccountStub = sinon.stub(AccountRepositoryDatabase.prototype, "saveAccount").resolves();
+	const getAccountByEmailStub = sinon.stub(AccountRepositoryDatabase.prototype, "getAccountByEmail").resolves(undefined);
+	const getAccountByIdStub = sinon.stub(AccountRepositoryDatabase.prototype, "getAccountById").resolves(Account.restore("", input.name, input.email, input.cpf, "", true, false));
+	const accountRepository = new AccountRepositoryDatabase(connection);
 	const mailerGateway = new MailerGatewayMemory();
-	const signup = new Signup(accountDAO, mailerGateway);
-	const getAccount = new GetAccount(accountDAO);
+	const signup = new Signup(accountRepository, mailerGateway);
+	const getAccount = new GetAccount(accountRepository);
 	const outputSignup = await signup.execute(input);
 	expect(outputSignup.accountId).toBeDefined();
 	const outputGetAccount = await getAccount.execute(outputSignup);
@@ -125,6 +128,7 @@ test("Deve criar uma conta para o passageiro com stub", async function () {
 	saveAccountStub.restore();
 	getAccountByEmailStub.restore();
 	getAccountByIdStub.restore();
+	await connection.close();
 });
 
 // Spy registra tudo que aconteceu com o componente que está sendo espionado, depois você faz a verificação que quiser
@@ -136,10 +140,11 @@ test("Deve criar uma conta para o passageiro com spy", async function () {
 		isPassenger: true
 	};
 	const sendSpy = sinon.spy(MailerGatewayMemory.prototype, "send");
-	const accountDAO = new AccountDAODatabase();
+	const connection = new PgPromiseAdapter();
+	const accountRepository = new AccountRepositoryDatabase(connection);
 	const mailerGateway = new MailerGatewayMemory();
-	const signup = new Signup(accountDAO, mailerGateway);
-	const getAccount = new GetAccount(accountDAO);
+	const signup = new Signup(accountRepository, mailerGateway);
+	const getAccount = new GetAccount(accountRepository);
 	const outputSignup = await signup.execute(input);
 	expect(outputSignup.accountId).toBeDefined();
 	const outputGetAccount = await getAccount.execute(outputSignup);
@@ -148,6 +153,8 @@ test("Deve criar uma conta para o passageiro com spy", async function () {
 	expect(outputGetAccount.cpf).toBe(input.cpf);
 	expect(sendSpy.calledOnce).toBe(true);
 	expect(sendSpy.calledWith(input.email, "Welcome!", "")).toBe(true);
+	sendSpy.restore();
+	await connection.close();
 });
 
 // Mock mistura características de Stub e Spy, criando as expectativas no próprio objeto (mock)
@@ -162,10 +169,11 @@ test("Deve criar uma conta para o passageiro com mock", async function () {
 	sendMock.expects("send").withArgs(input.email, "Welcome!", "").once().callsFake(async function () {
 		console.log("abc");
 	});
-	const accountDAO = new AccountDAODatabase();
+	const connection = new PgPromiseAdapter();
+	const accountRepository = new AccountRepositoryDatabase(connection);
 	const mailerGateway = new MailerGatewayMemory();
-	const signup = new Signup(accountDAO, mailerGateway);
-	const getAccount = new GetAccount(accountDAO);
+	const signup = new Signup(accountRepository, mailerGateway);
+	const getAccount = new GetAccount(accountRepository);
 	const outputSignup = await signup.execute(input);
 	expect(outputSignup.accountId).toBeDefined();
 	const outputGetAccount = await getAccount.execute(outputSignup);
@@ -174,4 +182,5 @@ test("Deve criar uma conta para o passageiro com mock", async function () {
 	expect(outputGetAccount.cpf).toBe(input.cpf);
 	sendMock.verify();
 	sendMock.restore();
+	await connection.close();
 });
