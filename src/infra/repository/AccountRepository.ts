@@ -1,6 +1,6 @@
 // interface adapter
 
-import Account from "../../domain/Account";
+import Account from "../../domain/entity/Account";
 import DatabaseConnection from "../database/DatabaseConnection";
 
 // Driven/Resource Port
@@ -28,29 +28,29 @@ export class AccountRepositoryDatabase implements AccountRepository {
 	}
 	
 	async saveAccount (account: Account) {
-		await this.connection.query("insert into cccat16.account (account_id, name, email, cpf, car_plate, is_passenger, is_driver) values ($1, $2, $3, $4, $5, $6, $7)", [account.accountId, account.name, account.email, account.cpf, account.carPlate, !!account.isPassenger, !!account.isDriver]);
+		await this.connection.query("insert into cccat16.account (account_id, name, email, cpf, car_plate, is_passenger, is_driver) values ($1, $2, $3, $4, $5, $6, $7)", [account.accountId, account.getName(), account.getEmail(), account.getCpf(), account.getCarPlate(), !!account.isPassenger, !!account.isDriver]);
 	}
 }
 
 // Driven/Resource Adapter
 export class AccountRepositoryMemory implements AccountRepository {
-	accounts: any[];
+	accounts: Account[];
 
 	constructor () {
 		this.accounts = [];
 	}
 
 	async getAccountByEmail(email: string): Promise<any> {
-		const account = this.accounts.find((account: any) => account.email === email);
+		const account = this.accounts.find((account: Account) => account.getEmail() === email);
 		return account;
 	}
 
 	async getAccountById(accountId: string): Promise<any> {
-		const account = this.accounts.find((account: any) => account.accountId === accountId);
+		const account = this.accounts.find((account: Account) => account.accountId === accountId);
 		return account;
 	}
 
-	async saveAccount(account: any): Promise<void> {
+	async saveAccount(account: Account): Promise<void> {
 		this.accounts.push(account);
 	}
 

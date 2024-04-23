@@ -1,4 +1,4 @@
-import Account from "../src/domain/Account";
+import Account from "../src/domain/entity/Account";
 import { GetAccount } from "../src/application/usecase/GetAccount";
 import { Signup } from "../src/application/usecase/Signup";
 import { AccountRepositoryDatabase, AccountRepositoryMemory } from "../src/infra/repository/AccountRepository";
