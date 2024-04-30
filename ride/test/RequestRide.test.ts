@@ -5,11 +5,13 @@ import { AccountRepositoryDatabase } from "../src/infra/repository/AccountReposi
 import { MailerGatewayMemory } from "../src/infra/gateway/MailerGateway";
 import { RideRepositoryDatabase } from "../src/infra/repository/RideRepository";
 import { PgPromiseAdapter } from "../src/infra/database/DatabaseConnection";
+import { PositionRepositoryDatabase } from "../src/infra/repository/PositionRepository";
 
 test("Deve solicitar uma corrida", async function () {
 	const connection = new PgPromiseAdapter();
 	const accountRepository = new AccountRepositoryDatabase(connection);
-	const rideRepository = new RideRepositoryDatabase();
+	const rideRepository = new RideRepositoryDatabase(connection);
+	const positionRepository = new PositionRepositoryDatabase(connection);
 	const mailerGateway = new MailerGatewayMemory();
 	const signup = new Signup(accountRepository, mailerGateway);
 	const inputSignup = {
@@ -29,7 +31,7 @@ test("Deve solicitar uma corrida", async function () {
 	}
 	const outputRequestRide = await requestRide.execute(inputRequestRide);
 	expect(outputRequestRide.rideId).toBeDefined();
-	const getRide = new GetRide(accountRepository, rideRepository);
+	const getRide = new GetRide(accountRepository, rideRepository, positionRepository);
 	const inputGetRide = {
 		rideId: outputRequestRide.rideId
 	};
@@ -49,7 +51,8 @@ test("Deve solicitar uma corrida", async function () {
 test("Não deve poder solicitar uma corrida se não for um passageiro", async function () {
 	const connection = new PgPromiseAdapter();
 	const accountRepository = new AccountRepositoryDatabase(connection)
-	const rideRepository = new RideRepositoryDatabase();
+	const rideRepository = new RideRepositoryDatabase(connection);
+	const positionRepository = new PositionRepositoryDatabase(connection);
 	const mailerGateway = new MailerGatewayMemory();
 	const signup = new Signup(accountRepository, mailerGateway);
 	const inputSignup = {
@@ -75,7 +78,7 @@ test("Não deve poder solicitar uma corrida se não for um passageiro", async fu
 test("Não deve poder solicitar uma corrida se o passageiro já tiver outra corrida ativa", async function () {
 	const connection = new PgPromiseAdapter();
 	const accountRepository = new AccountRepositoryDatabase(connection)
-	const rideRepository = new RideRepositoryDatabase();
+	const rideRepository = new RideRepositoryDatabase(connection);
 	const mailerGateway = new MailerGatewayMemory();
 	const signup = new Signup(accountRepository, mailerGateway);
 	const inputSignup = {
