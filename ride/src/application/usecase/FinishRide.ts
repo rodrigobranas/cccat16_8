@@ -17,7 +17,9 @@ export default class FinishRide {
 		const ride = await this.rideRepository.getRideById(input.rideId);
 		ride.finish();
 		await this.rideRepository.updateRide(ride);
-		await this.paymentGateway.processPayment({ rideId: ride.rideId, amount: ride.fare });
+		// await this.paymentGateway.processPayment({ rideId: ride.rideId, amount: ride.fare });
+		// const processPayment = new ProcessPayment();
+		// await processPayment.execute({ rideId: ride.rideId, amount: ride.fare });
 	}
 }
 

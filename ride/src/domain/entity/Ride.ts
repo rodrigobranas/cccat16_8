@@ -4,8 +4,6 @@ import crypto from "crypto";
 import Coord from "../vo/Coord";
 import Segment from "../vo/Segment";
 import RideStatus, { RideStatusFactory } from "../vo/RideStatus";
-import Position from "./Position";
-import Account from "./Account";
 import { FareCalculatorFactory } from "../service/FareCalculator";
 
 export default class Ride {

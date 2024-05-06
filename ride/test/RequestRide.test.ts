@@ -1,27 +1,24 @@
 import GetRide from "../src/application/usecase/GetRide";
 import RequestRide from "../src/application/usecase/RequestRide";
-import { Signup } from "../src/application/usecase/Signup";
-import { AccountRepositoryDatabase } from "../src/infra/repository/AccountRepository";
-import { MailerGatewayMemory } from "../src/infra/gateway/MailerGateway";
 import { RideRepositoryDatabase } from "../src/infra/repository/RideRepository";
 import { PgPromiseAdapter } from "../src/infra/database/DatabaseConnection";
 import { PositionRepositoryDatabase } from "../src/infra/repository/PositionRepository";
+import { AccountGatewayHttp } from "../src/infra/gateway/AccountGatewayHttp";
+import { AxiosAdapter, FetchAdapter } from "../src/infra/http/HttpClient";
 
 test("Deve solicitar uma corrida", async function () {
 	const connection = new PgPromiseAdapter();
-	const accountRepository = new AccountRepositoryDatabase(connection);
 	const rideRepository = new RideRepositoryDatabase(connection);
 	const positionRepository = new PositionRepositoryDatabase(connection);
-	const mailerGateway = new MailerGatewayMemory();
-	const signup = new Signup(accountRepository, mailerGateway);
+	const accountGateway = new AccountGatewayHttp(new FetchAdapter());
 	const inputSignup = {
 		name: "John Doe",
 		email: `john.doe${Math.random()}@gmail.com`,
 		cpf: "87748248800",
 		isPassenger: true
 	};
-	const outputSignup = await signup.execute(inputSignup);
-	const requestRide = new RequestRide(accountRepository, rideRepository);
+	const outputSignup = await accountGateway.signup(inputSignup);
+	const requestRide = new RequestRide(rideRepository, accountGateway);
 	const inputRequestRide = {
 		passengerId: outputSignup.accountId,
 		fromLat: -27.584905257808835,
@@ -31,7 +28,7 @@ test("Deve solicitar uma corrida", async function () {
 	}
 	const outputRequestRide = await requestRide.execute(inputRequestRide);
 	expect(outputRequestRide.rideId).toBeDefined();
-	const getRide = new GetRide(accountRepository, rideRepository, positionRepository);
+	const getRide = new GetRide(rideRepository, positionRepository, accountGateway);
 	const inputGetRide = {
 		rideId: outputRequestRide.rideId
 	};
@@ -50,11 +47,9 @@ test("Deve solicitar uma corrida", async function () {
 
 test("Não deve poder solicitar uma corrida se não for um passageiro", async function () {
 	const connection = new PgPromiseAdapter();
-	const accountRepository = new AccountRepositoryDatabase(connection)
 	const rideRepository = new RideRepositoryDatabase(connection);
 	const positionRepository = new PositionRepositoryDatabase(connection);
-	const mailerGateway = new MailerGatewayMemory();
-	const signup = new Signup(accountRepository, mailerGateway);
+	const accountGateway = new AccountGatewayHttp(new AxiosAdapter());
 	const inputSignup = {
 		name: "John Doe",
 		email: `john.doe${Math.random()}@gmail.com`,
@@ -62,8 +57,8 @@ test("Não deve poder solicitar uma corrida se não for um passageiro", async fu
 		carPlate: "AAA9999",
 		isDriver: true
 	};
-	const outputSignup = await signup.execute(inputSignup);
-	const requestRide = new RequestRide(accountRepository, rideRepository);
+	const outputSignup = await accountGateway.signup(inputSignup);
+	const requestRide = new RequestRide(rideRepository, accountGateway);
 	const inputRequestRide = {
 		passengerId: outputSignup.accountId,
 		fromLat: -27.584905257808835,
@@ -77,18 +72,16 @@ test("Não deve poder solicitar uma corrida se não for um passageiro", async fu
 
 test("Não deve poder solicitar uma corrida se o passageiro já tiver outra corrida ativa", async function () {
 	const connection = new PgPromiseAdapter();
-	const accountRepository = new AccountRepositoryDatabase(connection)
 	const rideRepository = new RideRepositoryDatabase(connection);
-	const mailerGateway = new MailerGatewayMemory();
-	const signup = new Signup(accountRepository, mailerGateway);
+	const accountGateway = new AccountGatewayHttp(new AxiosAdapter());
 	const inputSignup = {
 		name: "John Doe",
 		email: `john.doe${Math.random()}@gmail.com`,
 		cpf: "87748248800",
 		isPassenger: true
 	};
-	const outputSignup = await signup.execute(inputSignup);
-	const requestRide = new RequestRide(accountRepository, rideRepository);
+	const outputSignup = await accountGateway.signup(inputSignup);
+	const requestRide = new RequestRide(rideRepository, accountGateway);
 	const inputRequestRide = {
 		passengerId: outputSignup.accountId,
 		fromLat: -27.584905257808835,

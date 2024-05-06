@@ -1,20 +1,20 @@
-import { AccountRepository } from "../../infra/repository/AccountRepository"
 import crypto from "crypto";
 import RideRepository from "../../infra/repository/RideRepository";
 import PositionRepository from "../../infra/repository/PositionRepository";
 import DistanceCalculator from "../../domain/service/DistanceCalculator";
+import AccountGateway from "../gateway/AccountGateway";
 
 export default class GetRide {
 
-	constructor (readonly accountRepository: AccountRepository, readonly rideRepository: RideRepository, readonly positionRepository: PositionRepository) {
+	constructor (readonly rideRepository: RideRepository, readonly positionRepository: PositionRepository, readonly accountGateway: AccountGateway) {
 	}
 	
 	async execute (input: Input): Promise<Output> {
 		const ride = await this.rideRepository.getRideById(input.rideId);
-		const passenger = await this.accountRepository.getAccountById(ride.passengerId);
+		const passenger = await this.accountGateway.getAccountById(ride.passengerId);
 		let driver;
 		if (ride.driverId) {
-			driver = await this.accountRepository.getAccountById(ride.driverId);
+			driver = await this.accountGateway.getAccountById(ride.driverId);
 		}
 		const positions = await this.positionRepository.listPositionByRideId(input.rideId);
 		// const distance = DistanceCalculator.calculate(positions);
@@ -26,10 +26,10 @@ export default class GetRide {
 			toLat: ride.getToLat(),
 			toLong: ride.getToLong(),
 			status: ride.getStatus(),
-			passengerName: passenger.getName(),
-			passengerEmail: passenger.getEmail(),
-			driverName: driver?.getName(),
-			driverEmail: driver?.getEmail(),
+			passengerName: passenger.name,
+			passengerEmail: passenger.email,
+			driverName: driver?.name,
+			driverEmail: driver?.email,
 			distance: ride.distance,
 			fare: ride.fare
 		}
