@@ -5,11 +5,14 @@ import Coord from "../vo/Coord";
 import Segment from "../vo/Segment";
 import RideStatus, { RideStatusFactory } from "../vo/RideStatus";
 import { FareCalculatorFactory } from "../service/FareCalculator";
+import Observable from "../../infra/mediator/Observable";
+import RideCompleted from "../event/RideCompleted";
 
-export default class Ride {
+export default class Ride extends Observable {
 	status: RideStatus;
 
 	private constructor (readonly rideId: string, readonly passengerId: string, public driverId: string, private segment: Segment, status: string, readonly date: Date, public lastPosition: Coord, public distance: number, public fare: number) {
+		super();
 		this.status = RideStatusFactory.create(this, status);
 	}
 
@@ -38,6 +41,7 @@ export default class Ride {
 
 	finish () {
 		this.status.finish();
+		this.notify(new RideCompleted({ rideId: this.rideId, amount: this.fare }));
 	}
 
 	updatePosition (lat: number, long: number, date: Date) {
