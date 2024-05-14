@@ -6,6 +6,7 @@ import AcceptRide from "../src/application/usecase/AcceptRide";
 import { PositionRepositoryDatabase } from "../src/infra/repository/PositionRepository";
 import { AxiosAdapter } from "../src/infra/http/HttpClient";
 import { AccountGatewayHttp } from "../src/infra/gateway/AccountGatewayHttp";
+import GetRideQuery from "../src/application/query/GetRideQuery";
 
 test("Deve aceitar uma corrida", async function () {
 	const connection = new PgPromiseAdapter();
@@ -42,11 +43,12 @@ test("Deve aceitar uma corrida", async function () {
 		driverId: outputSignupDriver.accountId
 	};
 	await acceptRide.execute(inputAcceptRide);
-	const getRide = new GetRide(rideRepository, positionRepository, accountGateway);
+	// const getRide = new GetRide(rideRepository, positionRepository, accountGateway);
+	const getRide = new GetRideQuery(connection);
 	const inputGetRide = {
 		rideId: outputRequestRide.rideId
 	};
-	const outputGetRide = await getRide.execute(inputGetRide);
+	const outputGetRide = await getRide.execute(outputRequestRide.rideId);
 	expect(outputGetRide.rideId).toBe(outputRequestRide.rideId);
 	expect(outputGetRide.status).toBe("accepted");
 	expect(outputGetRide.driverName).toBe("John Doe");

@@ -4,6 +4,7 @@ import PositionRepository from "../../infra/repository/PositionRepository";
 import DistanceCalculator from "../../domain/service/DistanceCalculator";
 import AccountGateway from "../gateway/AccountGateway";
 
+// Command Model (Domain Model)
 export default class GetRide {
 
 	constructor (readonly rideRepository: RideRepository, readonly positionRepository: PositionRepository, readonly accountGateway: AccountGateway) {

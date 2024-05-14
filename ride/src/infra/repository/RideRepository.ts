@@ -5,6 +5,7 @@ import Ride from "../../domain/entity/Ride";
 import Position from "../../domain/entity/Position";
 import DatabaseConnection from "../database/DatabaseConnection";
 
+// Port
 export default interface RideRepository {
 	connection: DatabaseConnection;
 	saveRide (ride: Ride): Promise<void>;
@@ -13,6 +14,7 @@ export default interface RideRepository {
 	updateRide (ride: Ride): Promise<void>;
 }
 
+// Adapter
 export class RideRepositoryDatabase implements RideRepository {
 
 	constructor (readonly connection: DatabaseConnection) {
